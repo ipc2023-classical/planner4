@@ -56,8 +56,9 @@ void LandmarkHeuristic::initialize(const plugins::Options &opts) {
     }
 
     compute_landmark_graph(opts);
-    lm_status_manager =
-        utils::make_unique_ptr<LandmarkStatusManager>(*lm_graph);
+    lm_status_manager = utils::make_unique_ptr<LandmarkStatusManager>(
+        *lm_graph, opts.get<bool>("prog_goal"),
+        opts.get<bool>("prog_gn"), opts.get<bool>("prog_r"));
 
     if (use_preferred_operators) {
         /* Ideally, we should reuse the successor generator of the main
@@ -188,6 +189,11 @@ void LandmarkHeuristic::add_options_to_feature(plugins::Feature &feature) {
         "identify preferred operators (see OptionCaveats#"
         "Using_preferred_operators_with_landmark_heuristics)",
         "false");
+
+    feature.add_option<bool>("prog_goal", "progress goals", "true");
+    feature.add_option<bool>(
+        "prog_gn", "progress greedy-necessary orderings", "true");
+    feature.add_option<bool>("prog_r", "progress reasonable orderings", "true");
     Heuristic::add_options_to_feature(feature);
 
     feature.document_property("preferred operators",
