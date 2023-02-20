@@ -2,8 +2,6 @@
 
 #include "landmark.h"
 
-#include "../utils/logging.h"
-
 using namespace std;
 
 namespace landmarks {
@@ -48,11 +46,11 @@ void LandmarkStatusManager::process_initial_state(
     all_fut.set();
     */
 
-    set_past_landmarks_for_initial_state(initial_state, log);
+    set_landmarks_for_initial_state(initial_state, log);
     update_lm_status(initial_state);
 }
 
-void LandmarkStatusManager::set_past_landmarks_for_initial_state(
+void LandmarkStatusManager::set_landmarks_for_initial_state(
     const State &initial_state, utils::LogProxy & /*log*/) {
     BitsetView past = get_past_landmarks(initial_state);
     BitsetView fut = get_future_landmarks(initial_state);
@@ -150,6 +148,7 @@ void LandmarkStatusManager::progress_goal(
     if (!fut.test(id)) {
         Landmark &lm = lm_graph.get_node(id)->get_landmark();
         if (lm.is_true_in_goal && !lm.is_true_in_state(ancestor_state)) {
+            ++goal_progression_counter;
             fut.set(id);
         }
     }
@@ -168,6 +167,7 @@ void LandmarkStatusManager::progress_greedy_necessary(
             continue;
         }
         if (!parent.first->get_landmark().is_true_in_state(ancestor_state)) {
+            ++gn_progression_counter;
             fut.set(parent.first->get_id());
         }
     }
@@ -181,49 +181,65 @@ void LandmarkStatusManager::progress_reasonable(
 
     for (auto &child : lm_graph.get_node(id)->children) {
         if (child.second == EdgeType::REASONABLE) {
+            ++reasonable_progression_counter;
             fut.set(child.first->get_id());
         }
     }
 }
 
 void LandmarkStatusManager::update_lm_status(const State &ancestor_state) {
+    // TODO: We don't need the detour over *lm_status* anymore.
+
     const BitsetView past = get_past_landmarks(ancestor_state);
+    const BitsetView fut = get_future_landmarks(ancestor_state);
 
     const int num_landmarks = lm_graph.get_num_landmarks();
-    /* This first loop is necessary as setup for the needed-again
-       check in the second loop. */
     for (int id = 0; id < num_landmarks; ++id) {
-        lm_status[id] = past.test(id) ? PAST : FUTURE;
-    }
-    for (int id = 0; id < num_landmarks; ++id) {
-        if (lm_status[id] == PAST
-            && landmark_needed_again(id, ancestor_state)) {
+        if (!past.test(id)) {
+            assert(fut.test(id));
+            lm_status[id] = FUTURE;
+        } else if (!fut.test(id)) {
+            assert(past.test(id));
+            lm_status[id] = PAST;
+        } else {
             lm_status[id] = PAST_AND_FUTURE;
         }
     }
+
+    ///* This first loop is necessary as setup for the needed-again
+    //   check in the second loop. */
+    //for (int id = 0; id < num_landmarks; ++id) {
+    //    lm_status[id] = past.test(id) ? PAST : FUTURE;
+    //}
+    //for (int id = 0; id < num_landmarks; ++id) {
+    //    if (lm_status[id] == PAST
+    //        && landmark_needed_again(id, ancestor_state)) {
+    //        lm_status[id] = PAST_AND_FUTURE;
+    //    }
+    //}
 }
 
-bool LandmarkStatusManager::landmark_needed_again(
-    int id, const State &state) {
-    LandmarkNode *node = lm_graph.get_node(id);
-    const Landmark &landmark = node->get_landmark();
-    if (landmark.is_true_in_state(state)) {
-        return false;
-    } else if (landmark.is_true_in_goal) {
-        return true;
-    } else {
-        /*
-          For all A ->_gn B, if B is not reached and A currently not
-          true, since A is a necessary precondition for actions
-          achieving B for the first time, it must become true again.
-        */
-        for (const auto &child : node->children) {
-            if (child.second >= EdgeType::GREEDY_NECESSARY
-                && lm_status[child.first->get_id()] == FUTURE) {
-                return true;
-            }
-        }
-        return false;
-    }
-}
+//bool LandmarkStatusManager::landmark_needed_again(
+//    int id, const State &state) {
+//    LandmarkNode *node = lm_graph.get_node(id);
+//    const Landmark &landmark = node->get_landmark();
+//    if (landmark.is_true_in_state(state)) {
+//        return false;
+//    } else if (landmark.is_true_in_goal) {
+//        return true;
+//    } else {
+//        /*
+//          For all A ->_gn B, if B is not reached and A currently not
+//          true, since A is a necessary precondition for actions
+//          achieving B for the first time, it must become true again.
+//        */
+//        for (const auto &child : node->children) {
+//            if (child.second >= EdgeType::GREEDY_NECESSARY
+//                && lm_status[child.first->get_id()] == FUTURE) {
+//                return true;
+//            }
+//        }
+//        return false;
+//    }
+//}
 }

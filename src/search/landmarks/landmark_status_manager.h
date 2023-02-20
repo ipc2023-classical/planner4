@@ -17,13 +17,18 @@ class LandmarkStatusManager {
     const bool progress_greedy_necessary_orderings;
     const bool progress_reasonable_orderings;
 
+    static int goal_progression_counter;
+    static int gn_progression_counter;
+    static int reasonable_progression_counter;
+
     PerStateBitset past_lms;
     PerStateBitset future_lms;
+    // TODO: We don't need the detour over *lm_statys* anymore.
     std::vector<LandmarkStatus> lm_status;
 
-    bool landmark_needed_again(int id, const State &state);
+    //bool landmark_needed_again(int id, const State &state);
 
-    void set_past_landmarks_for_initial_state(
+    void set_landmarks_for_initial_state(
         const State &initial_state, utils::LogProxy &log);
 
     void progress_basic(
@@ -68,6 +73,7 @@ public:
      */
     LandmarkStatus get_landmark_status(size_t id) const {
         assert(static_cast<int>(id) < lm_graph.get_num_landmarks());
+        if (!past_lms[])
         return lm_status[id];
     }
 };
