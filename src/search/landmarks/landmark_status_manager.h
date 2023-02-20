@@ -35,9 +35,9 @@ private:
                                    const BitsetView &past, BitsetView &fut);
     void progress_reasonable(int id, const BitsetView &past, BitsetView &fut);
 public:
-    int goal_progression_counter;
-    int gn_progression_counter;
-    int reasonable_progression_counter;
+    int goal_progression_counter = 0;
+    int gn_progression_counter = 0;
+    int reasonable_progression_counter = 0;
 
     explicit LandmarkStatusManager(
         LandmarkGraph &graph,
