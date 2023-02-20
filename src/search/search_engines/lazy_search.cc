@@ -215,5 +215,8 @@ void LazySearch::reward_progress() {
 void LazySearch::print_statistics() const {
     statistics.print_detailed_statistics();
     search_space.print_statistics();
+    for (auto eval : path_dependent_evaluators) {
+        eval->print_statistics();
+    }
 }
 }

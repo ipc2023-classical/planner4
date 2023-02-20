@@ -178,6 +178,15 @@ void LandmarkHeuristic::notify_state_transition(
     }
 }
 
+void LandmarkHeuristic::print_statistics() {
+    log << "Landmark progression marked landmarks future due to "
+        << lm_status_manager->goal_progression_counter << " goals, "
+        << lm_status_manager->gn_progression_counter
+        << " greedy-necessary orderings, and "
+        << lm_status_manager->reasonable_progression_counter
+        << " reasonable orderings." << endl;
+}
+
 void LandmarkHeuristic::add_options_to_feature(plugins::Feature &feature) {
     feature.add_option<shared_ptr<LandmarkFactory>>(
         "lm_factory",

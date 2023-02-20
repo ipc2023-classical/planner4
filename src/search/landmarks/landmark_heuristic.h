@@ -57,6 +57,8 @@ public:
     virtual void notify_state_transition(const State &parent_state,
                                          OperatorID op_id,
                                          const State &state) override;
+
+    virtual void print_statistics() override;
 };
 }
 

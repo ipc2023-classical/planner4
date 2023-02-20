@@ -218,28 +218,4 @@ void LandmarkStatusManager::update_lm_status(const State &ancestor_state) {
     //    }
     //}
 }
-
-//bool LandmarkStatusManager::landmark_needed_again(
-//    int id, const State &state) {
-//    LandmarkNode *node = lm_graph.get_node(id);
-//    const Landmark &landmark = node->get_landmark();
-//    if (landmark.is_true_in_state(state)) {
-//        return false;
-//    } else if (landmark.is_true_in_goal) {
-//        return true;
-//    } else {
-//        /*
-//          For all A ->_gn B, if B is not reached and A currently not
-//          true, since A is a necessary precondition for actions
-//          achieving B for the first time, it must become true again.
-//        */
-//        for (const auto &child : node->children) {
-//            if (child.second >= EdgeType::GREEDY_NECESSARY
-//                && lm_status[child.first->get_id()] == FUTURE) {
-//                return true;
-//            }
-//        }
-//        return false;
-//    }
-//}
 }
