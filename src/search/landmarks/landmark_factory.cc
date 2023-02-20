@@ -75,6 +75,40 @@ shared_ptr<LandmarkGraph> LandmarkFactory::compute_lm_graph(
                 << lm_graph->get_num_conjunctive_landmarks() << " are conjunctive." << endl;
             log << lm_graph->get_num_edges() << " edges" << endl;
         }
+
+        unordered_map<EdgeType, int> counters;
+        for (auto &node : lm_graph->get_nodes()) {
+            for (auto &parent : node->parents) {
+                if (!counters.count(parent.second)) {
+                    counters[parent.second] = 0;
+                }
+                ++counters[parent.second];
+            }
+        }
+        for (auto &entry : counters) {
+            log << "Landmark graph has " << entry.second << " ";
+            switch(entry.first) {
+            case EdgeType::GREEDY_NECESSARY:
+                log << "greedy-";
+                [[fallthrough]];
+            case EdgeType::NECESSARY:
+                log << "necessary";
+                break;
+            case EdgeType::NATURAL:
+                log << "natural";
+                break;
+            case EdgeType::OBEDIENT_REASONABLE:
+                log << "obedient-";
+                [[fallthrough]];
+            case EdgeType::REASONABLE:
+                log << "reasonable";
+                break;
+            default:
+                assert(false);
+                break;
+            }
+            log << " orderings." << endl;
+        }
     }
 
     if (log.is_at_least_debug()) {
