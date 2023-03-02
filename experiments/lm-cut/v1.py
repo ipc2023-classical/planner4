@@ -12,24 +12,25 @@ from common_setup import IssueConfig, IssueExperiment
 ARCHIVE_PATH = "buechner/ipc23-landmarks/lm-cut/"
 DIR = os.path.dirname(os.path.abspath(__file__))
 BENCHMARKS_DIR = os.environ["DOWNWARD_BENCHMARKS"]
-REVISIONS = ["d9b690c4953320dd39d290905ff8b7fab04c02b9"]
+REVISIONS = ["2281574db1275d8a931305aede788c062947fa6e"]
 BUILDS = ["ipc23"]
-CONFIG_NICKS = [
-    (f"rhw", [
+
+SEARCHES = [
+    [
         "--search",
-        "let(hlm, dalm_sum(fact_translator(lm_rhw()),"
+        f"let(hlm, {h}({lm},"
         "transform=adapt_costs(one),"
         "prog_goal=false, prog_gn=false, prog_w=false),"
         "lazy_greedy([hlm], cost_type=one, reopen_closed=false))"
-    ]),
-    (f"lm-cut", [
-        "--search",
-        "let(hlm, dalm_sum(lm_cut_landmarks(),"
-        "transform=adapt_costs(one),"
-        "prog_goal=false, prog_gn=false, prog_w=false),"
-        "lazy_greedy([hlm], cost_type=one, reopen_closed=false))"
-    ]),
+    ] for h in {"dalm_sum", "dalm_greedy_hs"}
+      for lm in {"fact_translator(lm_rhw())", "lm_cut_landmarks()"}
 ]
+NAMES = [
+    f"{h}-{lm}" for h in {"sum", "greedy_hs"} for lm in {"rhw", "lm_cut"}
+]
+
+CONFIG_NICKS = list(zip(NAMES, SEARCHES))
+
 CONFIGS = [
     IssueConfig(
         config_nick,
