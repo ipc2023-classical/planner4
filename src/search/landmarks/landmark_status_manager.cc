@@ -59,12 +59,13 @@ void LandmarkStatusManager::set_landmarks_for_initial_state(
         if (node->get_landmark().is_true_in_state(initial_state)) {
             assert(past.test(id));
             for (auto &parent : node->parents) {
+                utils::unused_variable(parent);
                 assert(parent.second <= EdgeType::REASONABLE);
                 /* Reasonable orderings for which both landmarks hold should
                    not be generated in the first place. */
                 assert(!parent.first->get_landmark().is_true_in_state(
                     initial_state));
-                fut.set(parent.first->get_id());
+                fut.set(id);
             }
         } else {
             past.reset(id);
