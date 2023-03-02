@@ -730,6 +730,7 @@ fast_downward_plugin(
         landmarks/landmark_heuristic
         landmarks/landmark_status_manager
         landmarks/landmark_sum_heuristic
+        landmarks/lm_cut_factory
         landmarks/util
     DEPENDS LP_SOLVER PRIORITY_QUEUES SUCCESSOR_GENERATOR TASK_PROPERTIES
 )
