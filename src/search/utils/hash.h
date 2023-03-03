@@ -243,6 +243,13 @@ void feed(HashState &hash_state, const std::pair<T1, T2> &p) {
     feed(hash_state, p.second);
 }
 
+template<typename T1, typename T2, typename T3>
+void feed(HashState &hash_state, const std::tuple<T1, T2, T3> &t) {
+    feed(hash_state, std::get<0>(t));
+    feed(hash_state, std::get<1>(t));
+    feed(hash_state, std::get<2>(t));
+}
+
 template<typename T>
 void feed(HashState &hash_state, const std::vector<T> &vec) {
     /*
