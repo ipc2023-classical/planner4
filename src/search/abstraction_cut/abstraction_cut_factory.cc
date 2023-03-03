@@ -314,11 +314,11 @@ AbstractionCutFactory::get_landmark_graph(const State &state) {
 //    return make_shared<AbstractionCutFactory>(opts);
 //}
 
-class LandmarkGraphFactoryAbstractionCutFactory
-    : public plugins::TypedFeature<landmarks::LandmarkGraphFactory, LandmarkGraphFactoryAbstractionCutFactory> {
+class AbstractionCutFactoryFeature
+    : public plugins::TypedFeature<landmarks::LandmarkGraphFactory, AbstractionCutFactory> {
 public:
-    LandmarkGraphFactoryAbstractionCutFactory()
-            : TypedFeature("abstraction_cut") {
+    AbstractionCutFactoryFeature()
+        : TypedFeature("abstraction_cut") {
         document_title("TODO");
         document_synopsis(
                 "Disjunctive action landmark graph factory based on abstractions.");
@@ -345,6 +345,6 @@ public:
     }
 };
 
-static plugins::FeaturePlugin<LandmarkGraphFactoryAbstractionCutFactory> _plugin;
+static plugins::FeaturePlugin<AbstractionCutFactoryFeature> _plugin;
 
 }
