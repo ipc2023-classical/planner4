@@ -52,6 +52,7 @@ class DisjunctiveActionLandmarkGraph {
     std::vector<DisjunctiveActionLandmarkNode> lms;
     size_t num_strong_orderings = 0;
     size_t num_weak_orderings = 0;
+    bool dead_end = false;
 
     std::vector<bool> lm_true_in_initial;
     std::vector<std::pair<FactPair, size_t>> goal_achiever_lms;
@@ -96,6 +97,15 @@ public:
     const std::set<int> &get_actions(int id);
     const std::map<int, OrderingType> &get_dependencies(int id);
     OrderingType get_ordering_type(int from, int to);
+
+    bool is_dead_end() const {
+        return dead_end;
+    }
+
+    void mark_as_dead_end() {
+        dead_end = true;
+    }
+
     void dump() const;
     void dump_dot() const;
 

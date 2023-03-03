@@ -589,6 +589,7 @@ fast_downward_plugin(
         tasks/domain_abstracted_task_factory
         tasks/modified_goals_task
         tasks/modified_operator_costs_task
+        tasks/projected_task
     DEPENDS TASK_PROPERTIES
     DEPENDENCY_ONLY
 )
@@ -731,8 +732,21 @@ fast_downward_plugin(
         landmarks/landmark_status_manager
         landmarks/landmark_sum_heuristic
         landmarks/util
+        abstraction_cut/abstraction_cut_factory
+        abstraction_cut/projections
+        abstraction_cut/transition_system
     DEPENDS LP_SOLVER PRIORITY_QUEUES SUCCESSOR_GENERATOR TASK_PROPERTIES
 )
+
+#fast_downward_plugin(
+#        NAME ABSTRACTION_CUT
+#        HELP "The abstraction-cut heuristic"
+#        SOURCES
+#        abstraction_cut/abstraction_cut_factory
+#        abstraction_cut/projections
+#        abstraction_cut/transition_system
+#        DEPENDS EXTRA_TASKS LANDMARKS
+#)
 
 fast_downward_plugin(
     NAME OPERATOR_COUNTING
