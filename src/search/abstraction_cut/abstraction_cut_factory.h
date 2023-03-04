@@ -26,7 +26,8 @@ public:
     AbstractionCutFactory(const plugins::Options &opts);
 
     virtual void initialize(const std::shared_ptr<AbstractTask> &/*original_task*/) {}
-    virtual std::shared_ptr<landmarks::DisjunctiveActionLandmarkGraph> get_landmark_graph(const State &state);
+    std::shared_ptr<landmarks::DisjunctiveActionLandmarkGraph> get_landmark_graph(const State &state);
+    std::shared_ptr<landmarks::DisjunctiveActionLandmarkGraph> compute_landmark_graph(const std::shared_ptr<AbstractTask> &task) override;
 };
 }
 

@@ -735,7 +735,7 @@ fast_downward_plugin(
         abstraction_cut/abstraction_cut_factory
         abstraction_cut/projections
         abstraction_cut/transition_system
-    DEPENDS LP_SOLVER PRIORITY_QUEUES SUCCESSOR_GENERATOR TASK_PROPERTIES
+    DEPENDS LP_SOLVER PRIORITY_QUEUES SUCCESSOR_GENERATOR TASK_PROPERTIES EXTRA_TASKS PDBS
 )
 
 #fast_downward_plugin(
@@ -745,7 +745,7 @@ fast_downward_plugin(
 #        abstraction_cut/abstraction_cut_factory
 #        abstraction_cut/projections
 #        abstraction_cut/transition_system
-#        DEPENDS EXTRA_TASKS LANDMARKS
+#        DEPENDS EXTRA_TASKS LANDMARKS PDBS
 #)
 
 fast_downward_plugin(

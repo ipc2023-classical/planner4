@@ -260,6 +260,13 @@ AbstractionCutFactory::AbstractionCutFactory(
     cout << "Number of abstractions: " << abstractions.size() << endl;
 }
 
+std::shared_ptr<landmarks::DisjunctiveActionLandmarkGraph>
+AbstractionCutFactory::compute_landmark_graph(const shared_ptr<AbstractTask> &task) {
+    const TaskProxy task_proxy(*task);
+    const State &initial_state = task_proxy.get_initial_state();
+    return get_landmark_graph(initial_state);
+}
+
 shared_ptr<landmarks::DisjunctiveActionLandmarkGraph>
 AbstractionCutFactory::get_landmark_graph(const State &state) {
     shared_ptr<landmarks::DisjunctiveActionLandmarkGraph> result =
