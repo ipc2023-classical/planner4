@@ -17,18 +17,18 @@ REVISIONS = [
     "0ac4d2406",
     "5d18d2d92",
 ]
-BUILDS = ["release"]
-CONFIG_NICKS = [
-    (f"lama-first", [])
-]
+build = "release"
 CONFIGS = [
     IssueConfig(
-        config_nick,
-        config,
+        "lama-first",
+        [],
         build_options=[build],
-        driver_options=['--search-time-limit', '30m', "--build", build, "--alias", "lama-first"])
-    for config_nick, config in CONFIG_NICKS
-    for build in BUILDS
+        driver_options=['--search-time-limit', '30m', "--build", build, "--alias", "lama-first"]),
+    IssueConfig(
+        "lama",
+        [],
+        build_options=[build],
+        driver_options=['--search-time-limit', '30m', "--build", build, "--alias", "lama"]),
 ]
 
 SUITE = common_setup.DEFAULT_SATISFICING_SUITE
