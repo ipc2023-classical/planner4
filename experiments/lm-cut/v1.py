@@ -88,7 +88,28 @@ ATTRIBUTES = IssueExperiment.DEFAULT_TABLE_ATTRIBUTES + [
     #Attribute("prog_r", min_wins=False),
 ]
 
-exp.add_absolute_report_step(attributes=ATTRIBUTES)
+def no_unsupported(run):
+    return not run["domain"] in [
+        "assembly",
+        "caldera-sat18-adl",
+        "caldera-split-sat18-adl",
+        "cavediving-14-adl",
+        "citycar-sat14-adl",
+        "flashfill-sat18-adl",
+        "miconic-fulladl",
+        "miconic-simpleadl",
+        "nurikabe-sat18-adl",
+        "openstacks",
+        "openstacks-sat08-adl",
+        "optical-telegraphs",
+        "philosophers",
+        "psr-large",
+        "psr-middle",
+        "settlers-sat18-adl",
+        "trucks",
+    ]
+
+exp.add_absolute_report_step(attributes=ATTRIBUTES, filter=no_unsupported)
 #exp.add_comparison_table_step()
 #exp.add_scatter_plot_step(relative=True, attributes=["total_time", "memory"])
 exp.add_parse_again_step()
