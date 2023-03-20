@@ -139,100 +139,6 @@ void compute_forward_landmarks(const Abstraction &abstraction,
 }
 }
 
-vector<pair<set<int>,set<int>>> compute_backward_landmarks(const Abstraction &abstraction) {
-    vector<pair<set<int>,set<int>>> result;
-    const TransitionSystem &ts = abstraction.transition_system;
-
-    vector<bool> goal_zone(ts.num_states, false);
-    set<int> frontier; // TODO: Change to dynamic_bitset?
-    frontier.insert(ts.goal_states.begin(), ts.goal_states.end());
-    process_backward_frontier(ts, frontier, goal_zone);
-
-    while (true) {
-        set<int> landmark;
-        set<int> next_frontier;
-        for (int frontier_state : frontier) {
-            get_nonzero_cost_predecessors_and_operators(
-                    abstraction, frontier_state, goal_zone, next_frontier, landmark);
-        }
-        process_backward_frontier(ts, next_frontier, goal_zone);
-
-        if (next_frontier.empty()) {
-            assert(landmark.empty());
-            break;
-        }
-        assert(!landmark.empty());
-        result.push_back(make_pair(next_frontier, landmark));
-        frontier.swap(next_frontier);
-    }
-    std::reverse(result.begin(), result.end());
-    return result;
-}
-
-vector<pair<set<int>,set<int>>> compute_backward_transition_landmarks(
-    const Abstraction &abstraction) {
-    vector<pair<set<int>,set<int>>> result;
-    const TransitionSystem &ts = abstraction.transition_system;
-
-    vector<bool> goal_zone(ts.num_states, false);
-    set<int> frontier; // TODO: Change to dynamic_bitset?
-    frontier.insert(ts.goal_states.begin(), ts.goal_states.end());
-    process_backward_frontier(ts, frontier, goal_zone);
-
-    while (true) {
-        set<int> transition_landmark;
-        set<int> next_frontier;
-        for (int frontier_state : frontier) {
-            set<int> transition_ids =
-                get_nonzero_cost_incoming_transitions(ts, frontier_state, goal_zone);
-            for (int transition_id : transition_ids) {
-                next_frontier.insert(ts.transitions[transition_id].src);
-            }
-            transition_landmark.insert(transition_ids.begin(), transition_ids.end());
-        }
-        process_backward_frontier(ts, next_frontier, goal_zone);
-
-        if (next_frontier.empty()) {
-            assert(transition_landmark.empty());
-            break;
-        }
-        assert(!transition_landmark.empty());
-        result.push_back(make_pair(next_frontier, transition_landmark));
-        frontier.swap(next_frontier);
-    }
-    std::reverse(result.begin(), result.end());
-    return result;
-}
-
-vector<pair<set<int>,set<int>>> compute_forward_landmarks(const Abstraction &abstraction, State init) {
-    vector<pair<set<int>,set<int>>> result;
-    const TransitionSystem &ts = abstraction.transition_system;
-    const AbstractionFunction &alpha = abstraction.abstraction_function;
-    int cur_state_id = alpha.get_abstract_state_id(init);
-    if (cur_state_id == -1) {
-        return result;
-    }
-    vector<bool> init_zone(ts.num_states, false);
-    set<int> frontier; // TODO: Change to dynamic_bitset?
-    frontier.insert(cur_state_id);
-    process_forward_frontier(ts, frontier, init_zone);
-
-    while (all_of(ts.goal_states.begin(), ts.goal_states.end(),
-                  [&init_zone](int goal) {return !init_zone[goal];})) {
-        set<int> landmark;
-        set<int> next_frontier;
-        for (int frontier_state : frontier) {
-            get_nonzero_cost_successors_and_operators(
-                    abstraction, frontier_state, init_zone, next_frontier, landmark);
-        }
-        process_forward_frontier(ts, next_frontier, init_zone);
-
-        result.push_back(make_pair(frontier, landmark));
-        frontier.swap(next_frontier);
-    }
-    return result;
-}
-
 AbstractionCutFactory::AbstractionCutFactory(
     const plugins::Options &opts)
     : backward_lms(opts.get<bool>("backward_lms")),
@@ -277,38 +183,6 @@ AbstractionCutFactory::get_landmark_graph(const State &state) {
     }
     return result;
 }
-
-//static shared_ptr<landmarks::LandmarkGraphFactory> _parse(OptionParser &parser) {
-//    parser.document_synopsis(
-//        "Disjunctive action landmark graph factory based on abstractions.", "");
-//
-//    parser.add_list_option<shared_ptr<pdbs::PatternCollectionGenerator>>(
-//            "patterns",
-//            "pattern generation methods",
-//            "[systematic(2)]");
-//    parser.add_option<bool>(
-//        "backward_lms",
-//        "compute backward landmarks",
-//        "true");
-//    parser.add_option<bool>(
-//        "forward_lms",
-//        "compute forward landmarks",
-//        "false");
-//
-//    // TODO: Once the heuristic that uses this is implemented, it can pass the task to this
-//    parser.add_option<shared_ptr<AbstractTask>>(
-//            "transform",
-//            "Optional task transformation for the heuristic."
-//            " Currently, adapt_costs() and no_transform() are available.",
-//            "no_transform()");
-//
-//    Options opts = parser.parse();
-//    if (parser.help_mode() || parser.dry_run()) {
-//        return nullptr;
-//    }
-//
-//    return make_shared<AbstractionCutFactory>(opts);
-//}
 
 class AbstractionCutFactoryFeature
     : public plugins::TypedFeature<landmarks::LandmarkGraphFactory, AbstractionCutFactory> {

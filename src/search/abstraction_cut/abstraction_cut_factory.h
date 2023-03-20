@@ -10,13 +10,6 @@ namespace abstraction_cut {
 struct Abstraction;
 using Abstractions = std::vector<Abstraction>;
 
-extern std::vector<std::pair<std::set<int>,std::set<int>>>
-    compute_forward_landmarks(const Abstraction &abstraction, State init);
-extern std::vector<std::pair<std::set<int>,std::set<int>>>
-    compute_backward_landmarks(const Abstraction &abstraction);
-extern std::vector<std::pair<std::set<int>,std::set<int>>>
-    compute_backward_transition_landmarks(const Abstraction &abstraction);
-
 class AbstractionCutFactory : public landmarks::LandmarkGraphFactory {
     Abstractions abstractions;
     bool backward_lms;
