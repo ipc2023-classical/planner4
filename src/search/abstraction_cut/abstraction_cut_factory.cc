@@ -57,31 +57,27 @@ void process_backward_frontier(
     }
 }
 
-bool compute_backward_landmarks(const Abstraction &abstraction,
-                                const State &state,
-                                std::shared_ptr<landmarks::DisjunctiveActionLandmarkGraph> &result) {
+void compute_backward_landmarks(
+    const Abstraction &abstraction, const int &abstract_state_id,
+    std::shared_ptr<landmarks::DisjunctiveActionLandmarkGraph> &result) {
     const TransitionSystem &ts = abstraction.transition_system;
-    const AbstractionFunction &alpha = abstraction.abstraction_function;
-    int cur_state_id = alpha.get_abstract_state_id(state);
-    if (cur_state_id == -1) {
-        result->mark_as_dead_end();
-        return true;
-    }
-    vector<bool> goal_zone = get_forward_unreachable_states(ts, cur_state_id);
+    vector<bool> goal_zone =
+        get_forward_unreachable_states(ts, abstract_state_id);
     set<int> frontier; // TODO: Change to dynamic_bitset?
-    for (int goal_state: ts.goal_states) {
+    for (int goal_state : ts.goal_states) {
         if (!goal_zone[goal_state]) {
             frontier.insert(goal_state);
         }
     }
     process_backward_frontier(ts, frontier, goal_zone);
     int previous_lm_id = -1;
-    while (!goal_zone[cur_state_id]) {
+    while (!goal_zone[abstract_state_id]) {
         set<int> landmark;
         set<int> next_frontier;
         for (int frontier_state : frontier) {
             get_nonzero_cost_predecessors_and_operators(
-                abstraction, frontier_state, goal_zone, next_frontier, landmark);
+                abstraction, frontier_state, goal_zone, next_frontier,
+                landmark);
         }
         process_backward_frontier(ts, next_frontier, goal_zone);
 
@@ -93,7 +89,6 @@ bool compute_backward_landmarks(const Abstraction &abstraction,
         previous_lm_id = current_lm_id;
         frontier.swap(next_frontier);
     }
-    return false;
 }
 
 void process_forward_frontier(
@@ -113,19 +108,13 @@ void process_forward_frontier(
     }
 }
 
-bool compute_forward_landmarks(const Abstraction &abstraction,
-                               const State &state,
+void compute_forward_landmarks(const Abstraction &abstraction,
+                               const int abstract_state_id,
                                std::shared_ptr<landmarks::DisjunctiveActionLandmarkGraph> &result) {
     const TransitionSystem &ts = abstraction.transition_system;
-    const AbstractionFunction &alpha = abstraction.abstraction_function;
-    int cur_state_id = alpha.get_abstract_state_id(state);
-    if (cur_state_id == -1) {
-        result->mark_as_dead_end();
-        return true;
-    }
     vector<bool> init_zone(ts.num_states, false);
     set<int> frontier; // TODO: Change to dynamic_bitset?
-    frontier.insert(cur_state_id);
+    frontier.insert(abstract_state_id);
     process_forward_frontier(ts, frontier, init_zone);
     int previous_lm_id = -1;
 
@@ -147,7 +136,6 @@ bool compute_forward_landmarks(const Abstraction &abstraction,
         previous_lm_id = current_lm_id;
         frontier.swap(next_frontier);
     }
-    return false;
 }
 }
 
@@ -270,20 +258,21 @@ AbstractionCutFactory::compute_landmark_graph(const shared_ptr<AbstractTask> &ta
 shared_ptr<landmarks::DisjunctiveActionLandmarkGraph>
 AbstractionCutFactory::get_landmark_graph(const State &state) {
     shared_ptr<landmarks::DisjunctiveActionLandmarkGraph> result =
-            utils::make_unique_ptr<landmarks::DisjunctiveActionLandmarkGraph>();
-    bool is_dead_end = false;
+        utils::make_unique_ptr<landmarks::DisjunctiveActionLandmarkGraph>();
+    int abstract_state_id = -1;
     for (const Abstraction &abstraction : abstractions) {
+        abstract_state_id =
+            abstraction.abstraction_function.get_abstract_state_id(state);
+        if (abstract_state_id == -1) {
+            result->mark_as_dead_end();
+            break;
+        }
+
         if (backward_lms) {
-            is_dead_end = compute_backward_landmarks(abstraction, state, result);
-            if (is_dead_end) {
-                break;
-            }
+            compute_backward_landmarks(abstraction, abstract_state_id, result);
         }
         if (forward_lms) {
-            is_dead_end = compute_forward_landmarks(abstraction, state, result);
-            if (is_dead_end) {
-                break;
-            }
+            compute_forward_landmarks(abstraction, abstract_state_id, result);
         }
     }
     return result;
