@@ -43,6 +43,7 @@ class AbstractionFunction {
     std::vector<std::vector<int>> inverse_label_mapping;
 
 public:
+    AbstractionFunction(const std::vector<std::vector<int>> &&inverse_label_mapping);
     AbstractionFunction(const pdbs::Pattern &pattern,
                         const std::vector<int> &hash_multipliers,
                         std::vector<std::vector<int>> &&inverse_label_mapping);

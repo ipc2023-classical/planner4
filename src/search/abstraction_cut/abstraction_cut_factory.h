@@ -1,5 +1,6 @@
 #ifndef ABSTRACTION_CUT_ABSTRACTION_CUT_FACTORY_H
 #define ABSTRACTION_CUT_ABSTRACTION_CUT_FACTORY_H
+// taoheu
 
 #include "../landmarks/dalm_graph_factory.h"
 #include "../plugins/options.h"
@@ -14,6 +15,7 @@ class AbstractionCutFactory : public landmarks::LandmarkGraphFactory {
     Abstractions abstractions;
     bool backward_lms;
     bool forward_lms;
+    bool justification_graph;
 
 public:
     AbstractionCutFactory(const plugins::Options &opts);

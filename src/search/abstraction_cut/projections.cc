@@ -13,6 +13,11 @@
 using namespace std;
 
 namespace abstraction_cut {
+AbstractionFunction::AbstractionFunction(
+    const vector<vector<int>> &&inverse_label_mapping)
+    : pattern(vector<int>()), hash_multipliers(vector<int>()),
+      inverse_label_mapping(move(inverse_label_mapping)) {
+}
 AbstractionFunction::AbstractionFunction(const pdbs::Pattern &pattern,
                                          const vector<int> &hash_multipliers,
                                          vector<vector<int>> &&inverse_label_mapping)

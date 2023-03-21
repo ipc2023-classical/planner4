@@ -733,21 +733,22 @@ fast_downward_plugin(
         landmarks/landmark_status_manager
         landmarks/landmark_sum_heuristic
         landmarks/util
-        abstraction_cut/abstraction_cut_factory
-        abstraction_cut/projections
-        abstraction_cut/transition_system
+        #abstraction_cut/abstraction_cut_factory
+        #abstraction_cut/projections
+        #abstraction_cut/transition_system
     DEPENDS LP_SOLVER PRIORITY_QUEUES SUCCESSOR_GENERATOR TASK_PROPERTIES EXTRA_TASKS PDBS
 )
 
-#fast_downward_plugin(
-#        NAME ABSTRACTION_CUT
-#        HELP "The abstraction-cut heuristic"
-#        SOURCES
-#        abstraction_cut/abstraction_cut_factory
-#        abstraction_cut/projections
-#        abstraction_cut/transition_system
-#        DEPENDS EXTRA_TASKS LANDMARKS PDBS
-#)
+fast_downward_plugin(
+    NAME JUSTIFICATION_CUT
+    HELP "Abstraction-cuts over justification graphs"
+    SOURCES
+        abstraction_cut/abstraction_cut_factory
+        abstraction_cut/projections
+        abstraction_cut/transition_system
+        abstraction_cut/justification_graph_factory
+    DEPENDS EXTRA_TASKS LANDMARKS PDBS
+)
 
 fast_downward_plugin(
     NAME OPERATOR_COUNTING

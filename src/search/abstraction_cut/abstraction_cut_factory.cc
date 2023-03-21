@@ -1,5 +1,6 @@
 #include "abstraction_cut_factory.h"
 
+#include "justification_graph_factory.h"
 #include "projections.h"
 
 #include "../landmarks/dalm_graph.h"
@@ -139,18 +140,32 @@ void compute_forward_landmarks(const Abstraction &abstraction,
 }
 }
 
-AbstractionCutFactory::AbstractionCutFactory(
-    const plugins::Options &opts)
+AbstractionCutFactory::AbstractionCutFactory(const plugins::Options &opts)
     : backward_lms(opts.get<bool>("backward_lms")),
-      forward_lms(opts.get<bool>("forward_lms")) {
-    std::shared_ptr<AbstractTask> task = opts.get<shared_ptr<AbstractTask>>("transform");
-    vector<pdbs::Pattern> patterns = create_patterns_from_options(task, opts, "patterns");
+      forward_lms(opts.get<bool>("forward_lms")),
+      justification_graph(opts.get<bool>("justification_graph")) {
+    std::shared_ptr<AbstractTask> task =
+        opts.get<shared_ptr<AbstractTask>>("transform");
 
-    abstractions.reserve(patterns.size());
-    for (const pdbs::Pattern &pattern : patterns) {
-        abstractions.push_back(move(create_abstraction(task, pattern)));
+    if (justification_graph) {
+        // Create abstractions based on justification graphs.
+        // TODO: Replace minimal working interface by actual implementation.
+        const TaskProxy task_proxy(*task);
+        JustificationGraphFactory justification_graph_factory(task_proxy);
+        TransitionSystem ts = justification_graph_factory.get_justification_graph();
+        vector<vector<int>> inverse_label_mapping;
+        AbstractionFunction alpha(move(inverse_label_mapping));
+        Abstraction abstraction(move(alpha), move(ts));
+        abstractions.push_back(abstraction);
+    } else { // Use abstractions.
+        vector<pdbs::Pattern> patterns =
+            create_patterns_from_options(task, opts, "patterns");
+
+        abstractions.reserve(patterns.size());
+        for (const pdbs::Pattern &pattern : patterns) {
+            abstractions.push_back(move(create_abstraction(task, pattern)));
+        }
     }
-
     cout << "Number of abstractions: " << abstractions.size() << endl;
 }
 
@@ -169,11 +184,12 @@ AbstractionCutFactory::get_landmark_graph(const State &state) {
     for (const Abstraction &abstraction : abstractions) {
         abstract_state_id =
             abstraction.abstraction_function.get_abstract_state_id(state);
-        if (abstract_state_id == -1) {
-            result->mark_as_dead_end();
-            break;
+        if (!justification_graph) {
+            if (abstract_state_id == -1) {
+                result->mark_as_dead_end();
+                break;
+            }
         }
-
         if (backward_lms) {
             compute_backward_landmarks(abstraction, abstract_state_id, result);
         }
@@ -205,6 +221,10 @@ public:
                 "forward_lms",
                 "compute forward landmarks",
                 "false");
+        add_option<bool>(
+                "justification_graph",
+                "compute cuts over justification graphs",
+                "true");
 
         // TODO: Once the heuristic that uses this is implemented, it can pass the task to this
         add_option<shared_ptr<AbstractTask>>(
