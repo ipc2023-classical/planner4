@@ -15,9 +15,7 @@ namespace {
 vector<bool> get_forward_unreachable_states(
     const TransitionSystem &ts, int abstract_state_id) {
     vector<bool> is_goal_state(ts.num_states);
-    cout << "num states: " << ts.num_states << endl;
     for (int abstract_goal_id : ts.goal_states) {
-        cout << "abstract goal id: " << abstract_goal_id << endl;
         is_goal_state[abstract_goal_id] = true;
     }
     vector<bool> unreachable(ts.num_states, true);
@@ -66,9 +64,6 @@ void compute_backward_landmarks(
     const TransitionSystem &ts = abstraction.transition_system;
     vector<bool> goal_zone =
         get_forward_unreachable_states(ts, abstract_state_id);
-    for (const auto &element : goal_zone) {
-        cout << element << ", ";
-    }
     set<int> frontier; // TODO: Change to dynamic_bitset?
     for (int goal_state : ts.goal_states) {
         if (!goal_zone[goal_state]) {
@@ -93,11 +88,6 @@ void compute_backward_landmarks(
             result->add_edge(current_lm_id, previous_lm_id, false);
         }
         frontier.swap(next_frontier);
-        cout << "frontier: ";
-        for (const auto &element : frontier) {
-            cout << element << ", " << endl;
-        }
-        cout << endl;
     }
 }
 
@@ -160,18 +150,14 @@ AbstractionCutFactory::AbstractionCutFactory(const plugins::Options &opts)
         // Create abstractions based on justification graphs.
         // TODO: Replace minimal working interface by actual implementation.
         const TaskProxy task_proxy(*task);
-        cout << "Creating justification graph factory..." << endl;
         JustificationGraphFactory justification_graph_factory(task_proxy);
         // We get back an empty vector if the initial state is a dead-end.
         vector<TransitionSystem> transition_systems;
         vector<LabelMapping> label_mappings;
-        cout << "Getting justification graph..." << endl;
         justification_graph_factory.get_justification_graph(task_proxy.get_initial_state(), transition_systems, label_mappings);
         assert(transition_systems.size() == label_mappings.size());
         abstractions.reserve(transition_systems.size());
-        cout << "Creating abstractions..." << endl;
         for (size_t i = 0; i < transition_systems.size(); ++i) {
-            cout << "Creating abstraction " << i << "..." << endl;
             // AbstractionFunction alpha(move(inverse_label_mapping));
             Abstraction abstraction(move(label_mappings[i]), move(transition_systems[i]));
             abstractions.push_back(abstraction);
@@ -191,7 +177,6 @@ AbstractionCutFactory::AbstractionCutFactory(const plugins::Options &opts)
 
 std::shared_ptr<landmarks::DisjunctiveActionLandmarkGraph>
 AbstractionCutFactory::compute_landmark_graph(const shared_ptr<AbstractTask> &task) {
-    cout << "Computing landmark graph..." << endl;
     const TaskProxy task_proxy(*task);
     const State &initial_state = task_proxy.get_initial_state();
     return get_landmark_graph(initial_state);
@@ -199,7 +184,6 @@ AbstractionCutFactory::compute_landmark_graph(const shared_ptr<AbstractTask> &ta
 
 shared_ptr<landmarks::DisjunctiveActionLandmarkGraph>
 AbstractionCutFactory::get_landmark_graph(const State &state) {
-    cout << "Getting landmark graph..." << endl;
     shared_ptr<landmarks::DisjunctiveActionLandmarkGraph> result =
         utils::make_unique_ptr<landmarks::DisjunctiveActionLandmarkGraph>();
     int abstract_state_id;
@@ -217,10 +201,7 @@ AbstractionCutFactory::get_landmark_graph(const State &state) {
             }
         }
         if (backward_lms) {
-            cout << "Computing backward landmarks..." << endl;
-            cout << "state id" << abstract_state_id << endl;
             compute_backward_landmarks(abstraction, abstract_state_id, result);
-            cout << "Done computing backward landmarks." << endl;
         }
         if (forward_lms) {
             compute_forward_landmarks(abstraction, abstract_state_id, result);

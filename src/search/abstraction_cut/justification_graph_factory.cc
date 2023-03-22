@@ -26,7 +26,6 @@ JustificationGraphFactory::JustificationGraphFactory(
         propositions[var_id].push_back(RelaxedProposition());
         ++num_propositions;
         prop_to_fact.emplace(make_pair(var_id, propositions[var_id].size() - 1), fact);
-        cout << "added fact to prop to fact: " << fact.get_name() << endl;
     }
 
     // Build relaxed operators for operators and axioms.
@@ -109,7 +108,7 @@ string JustificationGraphFactory::get_fact_string(RelaxedProposition *prop) {
             }
         }
     }
-    //return prop_to_fact.at(prop).get_name();
+    return "ERROR";
 }
 
 // heuristic computation
@@ -283,20 +282,13 @@ JustificationGraphFactory::build_justification_graph(const State &state) {
     ++num_labels;
 
     exploration_queue.emplace(&artificial_precondition, num_states++);
-    cout << "id " << num_states-1 << ": " << get_fact_string(&artificial_precondition) << endl;
     int artificial_init_id = exploration_queue.back().second;
 
     for (FactProxy init_fact : state) {
         RelaxedProposition *init_prop = get_proposition(init_fact);
         exploration_queue.emplace(init_prop, num_states++);
-        cout << "id " << num_states-1 << ": " << get_fact_string(init_prop) << endl;
         transitions.emplace_back(-1, artificial_init_id, 0,
                                  exploration_queue.back().second, true);
-    }
-    for (const auto &vec : propositions) {
-        for (const auto &element : vec) {
-            //cout << element.status << endl;
-        }
     }
 
     while (!exploration_queue.empty()) {
@@ -307,18 +299,10 @@ JustificationGraphFactory::build_justification_graph(const State &state) {
             popped.first->precondition_of;
         for (RelaxedOperator *relaxed_op : triggered_operators) {
             // TODO: Remove debug print thing.
-            for (RelaxedProposition *effect : relaxed_op->effects) {
-                if (effect == &artificial_goal) {
-                    cout << "goal op h max supporter: " << get_fact_string(relaxed_op->h_max_supporter) << endl;
-                }
-            }
             if (relaxed_op->h_max_supporter != popped.first) {
                 continue;
             }
             for (RelaxedProposition *effect : relaxed_op->effects) {
-                if (effect == &artificial_goal) {
-                    cout << "artificial goal is being achieved" << endl;
-                }
                 int effect_prop_id;
                 // Get its "abstract_state_id" if the proposition is in the
                 // closed list, insert it otherwise.
@@ -326,7 +310,6 @@ JustificationGraphFactory::build_justification_graph(const State &state) {
                     effect_prop_id = closed.at(effect);
                 } else {
                     exploration_queue.emplace(effect, num_states++);
-                    cout << "id " << num_states-1 << ": " << get_fact_string(effect) << endl;
                     effect_prop_id = exploration_queue.back().second;
                 }
                 // Add the transition from precondition to effect prop.
@@ -345,24 +328,12 @@ JustificationGraphFactory::build_justification_graph(const State &state) {
             }
         }
     }
-    cout << "num_labels: " << num_labels << endl;
     vector<vector<int>> label_mapping(num_labels, vector<int>(1));
     for (const auto &element : op_id_to_label) {
         label_mapping[element.second] = vector<int>({element.first});
-        if (element.first == -1) {
-            continue;
-        }
-        cout << "op_id " << element.first  << ": " << op_id_to_op.at(element.first).get_name() << endl;
-    }
-    for (size_t i = 0; i < label_mapping.size(); ++i) {
-        cout << "label_id " << i << " -> op_id ";
-        for (const auto &element : label_mapping[i]) {
-            cout << element << endl;
-        }
     }
 
     TransitionSystem transition_system(num_states, num_labels, move(transitions), move(goal_states));
-    dump(transition_system);
     return make_pair(transition_system, label_mapping);
 }
 
