@@ -345,17 +345,6 @@ JustificationGraphFactory::build_justification_graph(const State &state) {
             }
         }
     }
-    // set<int> labels;
-    // for (const auto &transition : transitions) {
-    //     labels.insert(transition.label);
-    // }
-    // num_labels = labels.size();
-    // for (const auto &label : labels) {
-    //     if (label == -1) {
-    //         continue;
-    //     }
-    //     cout << "op_id " << label  << ": " << op_id_to_op.at(label).get_name() << endl;
-    // }
     cout << "num_labels: " << num_labels << endl;
     vector<vector<int>> label_mapping(num_labels, vector<int>(1));
     for (const auto &element : op_id_to_label) {
@@ -414,8 +403,6 @@ void JustificationGraphFactory::get_justification_graph(
         pair<TransitionSystem, vector<vector<int>>> justification_graph = build_justification_graph(state);
         transition_systems.push_back(justification_graph.first);
         label_mappings.push_back(justification_graph.second);
-        // TODO: Remove this break.
-        break;
 
 
         mark_goal_plateau(&artificial_goal);
