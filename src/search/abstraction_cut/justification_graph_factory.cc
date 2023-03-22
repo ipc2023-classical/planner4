@@ -5,6 +5,8 @@
 #include <algorithm>
 #include <limits>
 #include <utility>
+#include <map>
+#include <string>
 
 using namespace std;
 
@@ -23,11 +25,15 @@ JustificationGraphFactory::JustificationGraphFactory(
         int var_id = fact.get_variable().get_id();
         propositions[var_id].push_back(RelaxedProposition());
         ++num_propositions;
+        prop_to_fact.emplace(make_pair(var_id, propositions[var_id].size() - 1), fact);
+        cout << "added fact to prop to fact: " << fact.get_name() << endl;
     }
 
     // Build relaxed operators for operators and axioms.
-    for (OperatorProxy op : task_proxy.get_operators())
+    for (OperatorProxy op : task_proxy.get_operators()) {
         build_relaxed_operator(op);
+        op_id_to_op.emplace(op.get_id(), op);
+    }
 
     // Simplify relaxed operators.
     // simplify();
@@ -86,6 +92,24 @@ RelaxedProposition *JustificationGraphFactory::get_proposition(
     int var_id = fact.get_variable().get_id();
     int val = fact.get_value();
     return &propositions[var_id][val];
+}
+
+// TODO: Remove this function.
+string JustificationGraphFactory::get_fact_string(RelaxedProposition *prop) {
+    if (prop == &artificial_goal) {
+        return "artificial goal";
+    }
+    if (prop == &artificial_precondition) {
+        return "artificial precondition";
+    }
+    for (size_t i = 0; i < propositions.size(); ++i) {
+        for (size_t j = 0; j < propositions[i].size(); ++j) {
+            if (&propositions[i][j] == prop) {
+                return prop_to_fact.at(make_pair(i, j)).get_name();
+            }
+        }
+    }
+    //return prop_to_fact.at(prop).get_name();
 }
 
 // heuristic computation
@@ -232,6 +256,127 @@ void JustificationGraphFactory::second_exploration(
     }
 }
 
+
+pair<TransitionSystem, vector<vector<int>>>
+JustificationGraphFactory::build_justification_graph(const State &state) {
+    // TODO: Implement.
+    // The second_exploration does first in, last out, but I think we want first
+    // in, first out. That why it's a queue instead of a vector.
+    // The `second` int is the proposition's "abstract_state_id"
+    queue<pair<RelaxedProposition *, int>> exploration_queue;
+    //vector<vector<int>> label_mapping;
+    int num_states = 0;
+    int num_labels = 0;
+    // Artificial transitions get the label -1.
+    vector<Transition> transitions;
+    vector<int> goal_states{-1};
+    // Transition(int id, int src, int label, int dst, bool is_zero_cost)
+    // closed maps from propositions to their "abstract_state_id"
+    map<RelaxedProposition *, int> closed;
+    // Map every operator that appears in the transition system to a label.
+    // We can't use label IDs directly because label IDs have to go from 0 to
+    // num_labels-1.
+    map<int, int> op_id_to_label;
+    // Handle the artificial_precondition -> init_fact transitions.
+    // This should also be the mapping for the goal operator.
+    op_id_to_label.emplace(-1, 0);
+    ++num_labels;
+
+    exploration_queue.emplace(&artificial_precondition, num_states++);
+    cout << "id " << num_states-1 << ": " << get_fact_string(&artificial_precondition) << endl;
+    int artificial_init_id = exploration_queue.back().second;
+
+    for (FactProxy init_fact : state) {
+        RelaxedProposition *init_prop = get_proposition(init_fact);
+        exploration_queue.emplace(init_prop, num_states++);
+        cout << "id " << num_states-1 << ": " << get_fact_string(init_prop) << endl;
+        transitions.emplace_back(-1, artificial_init_id, 0,
+                                 exploration_queue.back().second, true);
+    }
+    for (const auto &vec : propositions) {
+        for (const auto &element : vec) {
+            //cout << element.status << endl;
+        }
+    }
+
+    while (!exploration_queue.empty()) {
+        pair<RelaxedProposition *, int> popped = exploration_queue.front();
+        closed.insert(popped);
+        exploration_queue.pop();
+        const vector<RelaxedOperator *> &triggered_operators =
+            popped.first->precondition_of;
+        for (RelaxedOperator *relaxed_op : triggered_operators) {
+            // TODO: Remove debug print thing.
+            for (RelaxedProposition *effect : relaxed_op->effects) {
+                if (effect == &artificial_goal) {
+                    cout << "goal op h max supporter: " << get_fact_string(relaxed_op->h_max_supporter) << endl;
+                }
+            }
+            if (relaxed_op->h_max_supporter != popped.first) {
+                continue;
+            }
+            for (RelaxedProposition *effect : relaxed_op->effects) {
+                if (effect == &artificial_goal) {
+                    cout << "artificial goal is being achieved" << endl;
+                }
+                int effect_prop_id;
+                // Get its "abstract_state_id" if the proposition is in the
+                // closed list, insert it otherwise.
+                if (closed.count(effect) > 0) {
+                    effect_prop_id = closed.at(effect);
+                } else {
+                    exploration_queue.emplace(effect, num_states++);
+                    cout << "id " << num_states-1 << ": " << get_fact_string(effect) << endl;
+                    effect_prop_id = exploration_queue.back().second;
+                }
+                // Add the transition from precondition to effect prop.
+                bool is_zero_cost =
+                    relaxed_op->base_cost == 0 ? true : false;
+                if (op_id_to_label.count(relaxed_op->original_op_id) == 0) {
+                    op_id_to_label.emplace(relaxed_op->original_op_id, num_labels++);
+                }
+                transitions.emplace_back(-1, popped.second,
+                                         op_id_to_label.at(relaxed_op->original_op_id),
+                                         effect_prop_id, is_zero_cost);
+                // Check if is goal.
+                if (goal_states[0] == -1 && effect == &artificial_goal) {
+                    goal_states[0] = effect_prop_id;
+                }
+            }
+        }
+    }
+    // set<int> labels;
+    // for (const auto &transition : transitions) {
+    //     labels.insert(transition.label);
+    // }
+    // num_labels = labels.size();
+    // for (const auto &label : labels) {
+    //     if (label == -1) {
+    //         continue;
+    //     }
+    //     cout << "op_id " << label  << ": " << op_id_to_op.at(label).get_name() << endl;
+    // }
+    cout << "num_labels: " << num_labels << endl;
+    vector<vector<int>> label_mapping(num_labels, vector<int>(1));
+    for (const auto &element : op_id_to_label) {
+        label_mapping[element.second] = vector<int>({element.first});
+        if (element.first == -1) {
+            continue;
+        }
+        cout << "op_id " << element.first  << ": " << op_id_to_op.at(element.first).get_name() << endl;
+    }
+    for (size_t i = 0; i < label_mapping.size(); ++i) {
+        cout << "label_id " << i << " -> op_id ";
+        for (const auto &element : label_mapping[i]) {
+            cout << element << endl;
+        }
+    }
+
+    TransitionSystem transition_system(num_states, num_labels, move(transitions), move(goal_states));
+    dump(transition_system);
+    return make_pair(transition_system, label_mapping);
+}
+
 void JustificationGraphFactory::mark_goal_plateau(RelaxedProposition *subgoal) {
     // NOTE: subgoal can be null if we got here via recursion through
     // a zero-cost action that is relaxed unreachable. (This can only
@@ -246,18 +391,10 @@ void JustificationGraphFactory::mark_goal_plateau(RelaxedProposition *subgoal) {
 }
 
 
-TransitionSystem JustificationGraphFactory::get_justification_graph() {
-    Transition t(0, 0, 0, 1, false);
-    TransitionSystem ts(2, 1, vector<Transition>{t}, vector<int>());
-    return ts;
-    // explicit TransitionSystem(int _num_states, int _num_labels, std::vector<Transition> &&_transitions, std::vector<int> &&_goal_states);
-    // TODO: Build justification graph as a TransitionSystem.
-}
+void JustificationGraphFactory::get_justification_graph(
+    const State &state, vector<TransitionSystem> &transition_systems,
+    vector<vector<vector<int>>> &label_mappings) {
 
-
-bool JustificationGraphFactory::compute_landmarks(
-    const State &state, CostCallback cost_callback,
-    LandmarkCallback landmark_callback) {
     for (RelaxedOperator &op : relaxed_operators) {
         op.cost = op.base_cost;
     }
@@ -270,13 +407,20 @@ bool JustificationGraphFactory::compute_landmarks(
     vector<RelaxedProposition *> second_exploration_queue;
     first_exploration(state);
     if (artificial_goal.status == UNREACHED)
-        return true;
+        // This leaves the output vectors empty.
+        return;
 
-    int num_iterations = 0;
     while (artificial_goal.h_max_cost != 0) {
-        ++num_iterations;
+        pair<TransitionSystem, vector<vector<int>>> justification_graph = build_justification_graph(state);
+        transition_systems.push_back(justification_graph.first);
+        label_mappings.push_back(justification_graph.second);
+        // TODO: Remove this break.
+        break;
+
+
         mark_goal_plateau(&artificial_goal);
         assert(cut.empty());
+
         second_exploration(state, second_exploration_queue, cut);
         assert(!cut.empty());
         int cut_cost = numeric_limits<int>::max();
@@ -284,17 +428,6 @@ bool JustificationGraphFactory::compute_landmarks(
             cut_cost = min(cut_cost, op->cost);
         for (RelaxedOperator *op : cut)
             op->cost -= cut_cost;
-
-        if (cost_callback) {
-            cost_callback(cut_cost);
-        }
-        if (landmark_callback) {
-            landmark.clear();
-            for (RelaxedOperator *op : cut) {
-                landmark.push_back(op->original_op_id);
-            }
-            landmark_callback(landmark, cut_cost);
-        }
 
         first_exploration_incremental(cut);
         // validate_h_max();  // too expensive to use even in regular debug mode
@@ -315,6 +448,8 @@ bool JustificationGraphFactory::compute_landmarks(
         artificial_goal.status = REACHED;
         artificial_precondition.status = REACHED;
     }
-    return false;
+    // TODO: Make sure the transition systems and label mappings were added to
+    // their respective vectors.
+    return;
 }
 }

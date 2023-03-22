@@ -233,15 +233,15 @@ void dump(const TransitionSystem &ts) {
     cout << "Transition system with " << ts.num_states << " states and "
          << ts.num_labels << " labels:" << endl;
     cout << "  Goal states: " << ts.goal_states << endl;
-    cout << "  Backward Offsets: " << ts.backward_offsets << endl;
-    cout << "  Backward Transitions:" << endl;
-    for (shared_ptr<Transition> t : ts.backward_transitions) {
-        cout << "    " << t->id << ": " << t->src << " --" << t->label << "--> " << t->dst <<  (t->is_zero_cost? ", 0-cost)" : "") << endl;
-    }
+    // cout << "  Backward Offsets: " << ts.backward_offsets << endl;
+    // cout << "  Backward Transitions:" << endl;
+    // for (shared_ptr<Transition> t : ts.backward_transitions) {
+    //     cout << "    " << t->id << ": " << t->src << " --" << t->label << "--> " << t->dst <<  (t->is_zero_cost? ", 0-cost)" : "") << endl;
+    // }
     cout << "  Forward Offsets: " << ts.forward_offsets << endl;
     cout << "  Forward Transitions:" << endl;
     for (shared_ptr<Transition> t : ts.forward_transitions) {
-        cout << "    " << t->id << ": " << t->src << " --" << t->label << "--> " << t->dst <<  (t->is_zero_cost? ", 0-cost)" : "") << endl;
+        cout << "    " << t->id << ": " << t->src << " --{" << t->label << "}--> " << t->dst <<  (t->is_zero_cost? ", 0-cost)" : "") << endl;
     }
 }
 }

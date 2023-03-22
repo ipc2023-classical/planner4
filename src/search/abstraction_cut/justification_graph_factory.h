@@ -11,6 +11,7 @@
 #include <functional>
 #include <memory>
 #include <vector>
+#include <map>
 
 namespace abstraction_cut {
 // TODO: Fix duplication with the other relaxation heuristics.
@@ -60,18 +61,25 @@ class JustificationGraphFactory {
     int num_propositions;
     priority_queues::AdaptiveQueue<RelaxedProposition *> priority_queue;
 
+    std::map<std::pair<int, int>, FactProxy> prop_to_fact;
+    std::map<int, OperatorProxy> op_id_to_op;
+
     void build_relaxed_operator(const OperatorProxy &op);
     void add_relaxed_operator(std::vector<RelaxedProposition *> &&precondition,
                               std::vector<RelaxedProposition *> &&effects,
                               int op_id, int base_cost);
     RelaxedProposition *get_proposition(const FactProxy &fact);
+    std::string get_fact_string(RelaxedProposition *prop);
     void setup_exploration_queue();
     void setup_exploration_queue_state(const State &state);
     void first_exploration(const State &state);
     void first_exploration_incremental(std::vector<RelaxedOperator *> &cut);
-    void second_exploration(const State &state,
-                            std::vector<RelaxedProposition *> &second_exploration_queue,
-                            std::vector<RelaxedOperator *> &cut);
+    void second_exploration(
+        const State &state,
+        std::vector<RelaxedProposition *> &second_exploration_queue,
+        std::vector<RelaxedOperator *> &cut);
+    std::pair<TransitionSystem, std::vector<std::vector<int>>>
+        build_justification_graph(const State &state);
 
     void enqueue_if_necessary(RelaxedProposition *prop, int cost) {
         assert(cost >= 0);
@@ -83,10 +91,11 @@ class JustificationGraphFactory {
     }
 
     void mark_goal_plateau(RelaxedProposition *subgoal);
+
 public:
     using Landmark = std::vector<int>;
-    using CostCallback = std::function<void (int)>;
-    using LandmarkCallback = std::function<void (const Landmark &, int)>;
+    using CostCallback = std::function<void(int)>;
+    using LandmarkCallback = std::function<void(const Landmark &, int)>;
 
     JustificationGraphFactory(const TaskProxy &task_proxy);
     virtual ~JustificationGraphFactory();
@@ -104,13 +113,11 @@ public:
 
       Returns true iff state is detected as a dead end.
     */
-    bool compute_landmarks(const State &state, CostCallback cost_callback,
-                           LandmarkCallback landmark_callback);
 
-
-    TransitionSystem get_justification_graph();
+    void get_justification_graph(
+        const State &state, std::vector<TransitionSystem> &transition_systems,
+        std::vector<std::vector<std::vector<int>>> &label_mappings);
 };
-
 inline void RelaxedOperator::update_h_max_supporter() {
     assert(!unsatisfied_preconditions);
     for (size_t i = 0; i < preconditions.size(); ++i)
