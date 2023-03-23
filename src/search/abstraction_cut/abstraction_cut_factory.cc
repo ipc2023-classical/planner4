@@ -154,7 +154,7 @@ AbstractionCutFactory::AbstractionCutFactory(const plugins::Options &opts)
         // We get back an empty vector if the initial state is a dead-end.
         vector<TransitionSystem> transition_systems;
         vector<LabelMapping> label_mappings;
-        justification_graph_factory.get_justification_graph(task_proxy.get_initial_state(), transition_systems, label_mappings);
+        justification_graph_factory.get_justification_graph(task_proxy.get_initial_state(), transition_systems, label_mappings, opts.get<bool>("single_justification_graph"));
         assert(transition_systems.size() == label_mappings.size());
         abstractions.reserve(transition_systems.size());
         for (size_t i = 0; i < transition_systems.size(); ++i) {
@@ -235,6 +235,10 @@ public:
                 "justification_graph",
                 "compute cuts over justification graphs",
                 "true");
+        add_option<bool>(
+                "single_justification_graph",
+                "only do first iteraton of lm-cut",
+                "false");
 
         // TODO: Once the heuristic that uses this is implemented, it can pass the task to this
         add_option<shared_ptr<AbstractTask>>(

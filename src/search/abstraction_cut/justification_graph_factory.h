@@ -116,7 +116,7 @@ public:
 
     void get_justification_graph(
         const State &state, std::vector<TransitionSystem> &transition_systems,
-        std::vector<std::vector<std::vector<int>>> &label_mappings);
+        std::vector<std::vector<std::vector<int>>> &label_mappings, bool single_justification_graph);
 };
 inline void RelaxedOperator::update_h_max_supporter() {
     assert(!unsatisfied_preconditions);

@@ -7,6 +7,7 @@
 #include <utility>
 #include <map>
 #include <string>
+#include <stack>
 
 using namespace std;
 
@@ -262,8 +263,7 @@ JustificationGraphFactory::build_justification_graph(const State &state) {
     // The second_exploration does first in, last out, but I think we want first
     // in, first out. That why it's a queue instead of a vector.
     // The `second` int is the proposition's "abstract_state_id"
-    queue<pair<RelaxedProposition *, int>> exploration_queue;
-    //vector<vector<int>> label_mapping;
+    stack<pair<RelaxedProposition *, int>> exploration_queue;
     int num_states = 0;
     int num_labels = 0;
     // Artificial transitions get the label -1.
@@ -282,17 +282,17 @@ JustificationGraphFactory::build_justification_graph(const State &state) {
     ++num_labels;
 
     exploration_queue.emplace(&artificial_precondition, num_states++);
-    int artificial_init_id = exploration_queue.back().second;
+    int artificial_init_id = exploration_queue.top().second;
 
     for (FactProxy init_fact : state) {
         RelaxedProposition *init_prop = get_proposition(init_fact);
         exploration_queue.emplace(init_prop, num_states++);
         transitions.emplace_back(-1, artificial_init_id, 0,
-                                 exploration_queue.back().second, true);
+                                 exploration_queue.top().second, true);
     }
 
     while (!exploration_queue.empty()) {
-        pair<RelaxedProposition *, int> popped = exploration_queue.front();
+        pair<RelaxedProposition *, int> popped = exploration_queue.top();
         closed.insert(popped);
         exploration_queue.pop();
         const vector<RelaxedOperator *> &triggered_operators =
@@ -310,17 +310,18 @@ JustificationGraphFactory::build_justification_graph(const State &state) {
                     effect_prop_id = closed.at(effect);
                 } else {
                     exploration_queue.emplace(effect, num_states++);
-                    effect_prop_id = exploration_queue.back().second;
+                    effect_prop_id = exploration_queue.top().second;
                 }
                 // Add the transition from precondition to effect prop.
-                bool is_zero_cost =
-                    relaxed_op->base_cost == 0 ? true : false;
+                bool is_zero_cost = relaxed_op->base_cost == 0 ? true : false;
                 if (op_id_to_label.count(relaxed_op->original_op_id) == 0) {
-                    op_id_to_label.emplace(relaxed_op->original_op_id, num_labels++);
+                    op_id_to_label.emplace(relaxed_op->original_op_id,
+                                           num_labels++);
                 }
-                transitions.emplace_back(-1, popped.second,
-                                         op_id_to_label.at(relaxed_op->original_op_id),
-                                         effect_prop_id, is_zero_cost);
+                transitions.emplace_back(
+                    -1, popped.second,
+                    op_id_to_label.at(relaxed_op->original_op_id),
+                    effect_prop_id, is_zero_cost);
                 // Check if is goal.
                 if (goal_states[0] == -1 && effect == &artificial_goal) {
                     goal_states[0] = effect_prop_id;
@@ -333,8 +334,9 @@ JustificationGraphFactory::build_justification_graph(const State &state) {
         label_mapping[element.second] = vector<int>({element.first});
     }
 
-    TransitionSystem transition_system(num_states, num_labels, move(transitions), move(goal_states));
-    return make_pair(transition_system, label_mapping);
+    return make_pair(TransitionSystem(num_states, num_labels, move(transitions),
+                                      move(goal_states)),
+                     label_mapping);
 }
 
 void JustificationGraphFactory::mark_goal_plateau(RelaxedProposition *subgoal) {
@@ -353,7 +355,7 @@ void JustificationGraphFactory::mark_goal_plateau(RelaxedProposition *subgoal) {
 
 void JustificationGraphFactory::get_justification_graph(
     const State &state, vector<TransitionSystem> &transition_systems,
-    vector<vector<vector<int>>> &label_mappings) {
+    vector<vector<vector<int>>> &label_mappings, bool single_justification_graph) {
 
     for (RelaxedOperator &op : relaxed_operators) {
         op.cost = op.base_cost;
@@ -372,8 +374,10 @@ void JustificationGraphFactory::get_justification_graph(
 
     while (artificial_goal.h_max_cost != 0) {
         pair<TransitionSystem, vector<vector<int>>> justification_graph = build_justification_graph(state);
-        transition_systems.push_back(justification_graph.first);
-        label_mappings.push_back(justification_graph.second);
+        transition_systems.push_back(move(justification_graph.first));
+        label_mappings.push_back(move(justification_graph.second));
+        if (single_justification_graph)
+            return;
 
 
         mark_goal_plateau(&artificial_goal);
