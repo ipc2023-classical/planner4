@@ -14,7 +14,7 @@ from common_setup import IssueConfig, IssueExperiment
 ARCHIVE_PATH = "buechner/ipc23-landmarks/justification-cut"
 DIR = os.path.dirname(os.path.abspath(__file__))
 BENCHMARKS_DIR = os.environ["DOWNWARD_BENCHMARKS"]
-REVISIONS = [("d15d64638550cc63f0c3203f656bbca2118de87a", "")]
+REVISIONS = [("057c8582c619a1abd107470669af6c7827b7c2fc", "")]
 BUILDS = ["ipc23"]
 CONFIG_NICKS = [
     (f"no-fwd_no-single", [
