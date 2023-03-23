@@ -87,6 +87,7 @@ void compute_backward_landmarks(
             // TODO: some orderings can be shown to be stronger than weak
             result->add_edge(current_lm_id, previous_lm_id, false);
         }
+        previous_lm_id = current_lm_id;
         frontier.swap(next_frontier);
     }
 }
