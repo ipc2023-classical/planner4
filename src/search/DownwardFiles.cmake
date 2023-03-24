@@ -707,8 +707,6 @@ fast_downward_plugin(
     NAME LANDMARKS
     HELP "Plugin containing the code to reason with landmarks"
     SOURCES
-        landmarks/dalm_factory_reasonable_orders_hps
-    	landmarks/dalm_factory_rhw
         landmarks/dalm_graph
         landmarks/dalm_graph_factory
         landmarks/dalm_greedy_hitting_set_heuristic
@@ -734,7 +732,33 @@ fast_downward_plugin(
         landmarks/landmark_status_manager
         landmarks/landmark_sum_heuristic
         landmarks/util
-    DEPENDS LP_SOLVER PRIORITY_QUEUES SUCCESSOR_GENERATOR TASK_PROPERTIES
+        DEPENDS LP_SOLVER PRIORITY_QUEUES SUCCESSOR_GENERATOR TASK_PROPERTIES
+)
+
+fast_downward_plugin(
+    NAME DISJUNCTIVE_ACTION_LANDMARKS
+    HELP "Plugin containing the code to reason with disjunctive action landmarks"
+    SOURCES
+        landmarks/dalm_factory_reasonable_orders_hps
+    	landmarks/dalm_factory_rhw
+        landmarks/dalm_factory_uaa
+        landmarks/dalm_graph
+        landmarks/dalm_graph_factory
+        landmarks/dalm_greedy_hitting_set_heuristic
+        landmarks/dalm_heuristic
+        landmarks/dalm_status_manager
+        landmarks/dalm_sum_heuristic
+        landmarks/exploration
+        landmarks/fact_landmark_graph_translator_factory
+        landmarks/fact_landmark_graph_translator_factory_possible
+        landmarks/landmark
+        landmarks/landmark_factory
+        landmarks/landmark_factory_reasonable_orders_hps
+        landmarks/landmark_factory_relaxation
+        landmarks/landmark_factory_rpg_sasp
+        landmarks/landmark_graph
+        landmarks/util
+    DEPENDS PRIORITY_QUEUES SUCCESSOR_GENERATOR TASK_PROPERTIES
 )
 
 fast_downward_plugin(
@@ -747,8 +771,10 @@ fast_downward_plugin(
         landmarks/cyclic_landmark_heuristic
         landmarks/depth_first_oracle
         landmarks/floyd_warshall_oracle
+        operator_counting/constraint_generator
         operator_counting/landmark_constraints
-    DEPENDS LANDMARKS OPERATOR_COUNTING
+        operator_counting/lm_cut_constraints
+    DEPENDS DISJUNCTIVE_ACTION_LANDMARKS LANDMARK_CUT_HEURISTIC LP_SOLVER
 )
 
 fast_downward_plugin(

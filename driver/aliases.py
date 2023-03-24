@@ -146,10 +146,10 @@ ALIASES["dalai-agl-2023"] = [
     "--search",
     "--if-unit-cost",
     f"let(hlm,dalm_sum({dalai_agl_lm_factory},pref=true),"
-    "lazy_greedy([hlm],preferred=[hlm]))",
+    "lazy_greedy([hlm],preferred=[hlm],boost=0))",
     "--if-non-unit-cost",
     f"let(hlm,dalm_sum({dalai_agl_lm_factory},transform=adapt_costs(one),pref=true),"
-    "lazy_greedy([hlm],preferred=[hlm],cost_type=one,reopen_closed=false))"
+    "lazy_greedy([hlm],preferred=[hlm],boost=0,cost_type=one,reopen_closed=false))"
     # Append --always to be on the safe side if we want to append
     # additional options later.
     "--always",
@@ -161,7 +161,7 @@ ALIASES["dalai-opt-2023"] = [
     "cycle_generator=johnson,additional_constraint_generators=[lmcut_constraints()]))",
 ]
 
-dalai_sat_lm_factory = "fact_translator(lm_reasonable_orders_hps(lm_rhw()),uaa_landmarks=true)"
+dalai_sat_lm_factory = "dalm_uaa(dalm_reasonable_orders_hps(dalm_rhw(max_preconditions=12)))"
 ALIASES["dalai-sat-2023"] = [
     "--search",
     "--if-unit-cost",
